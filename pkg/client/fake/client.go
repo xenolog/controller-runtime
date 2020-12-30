@@ -171,11 +171,13 @@ func (c *fakeClient) List(ctx context.Context, obj runtime.Object, opts ...clien
 
 	OriginalKind := gvk.Kind
 
-	if !strings.HasSuffix(gvk.Kind, "List") {
+	switch {
+	case strings.HasSuffix(gvk.Kind, "List"):
+		// we need the non-list GVK, so chop off the "List" from the end of the kind
+		gvk.Kind = gvk.Kind[:len(gvk.Kind)-4]
+	case !strings.HasPrefix(fmt.Sprintf("%T", obj), "*unstructured.UnstructuredList"):
 		return fmt.Errorf("non-list type %T (kind %q) passed as output", obj, gvk)
 	}
-	// we need the non-list GVK, so chop off the "List" from the end of the kind
-	gvk.Kind = gvk.Kind[:len(gvk.Kind)-4]
 
 	listOpts := client.ListOptions{}
 	listOpts.ApplyOptions(opts)
